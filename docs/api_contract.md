@@ -7,8 +7,6 @@ API digunakan untuk komunikasi antara frontend, backend, dan layanan AI dalam me
 
 ---
 
----
-
 ## 📦 Format Umum
 
 ### Request
@@ -237,7 +235,6 @@ v1.0 (Initial Release - Capstone MVP)
 
 ## 🤝 Maintainer
 
-* Project Manager: Aikylla
 * AI Engineer Team
 * Data Scientist Team
 * Fullstack Developer Team
