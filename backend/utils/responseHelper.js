@@ -1,23 +1,35 @@
 /**
- * Standardized API response helpers.
- * Matches the SYNAR API Contract format:
- *   Success → { status: "success", data: { ... } }
- *   Error   → { status: "error", message: "..." }
+ * Helper functions untuk standarisasi format response API.
+ * Semua response mengikuti format konsisten:
+ *
+ * Success: { error: false, data: { ... } }
+ * Error:   { error: true, message: "..." }
  */
 
-const sendSuccess = (res, { data = null, statusCode = 200 } = {}) => {
-  const response = { status: "success" };
-
-  if (data !== null) {
-    response.data = data;
-  }
-
-  return res.status(statusCode).json(response);
+/**
+ * Kirim response sukses.
+ * @param {object} res - Express response object
+ * @param {object} options
+ * @param {*} options.data - Data yang akan dikirim
+ * @param {number} [options.statusCode=200] - HTTP status code
+ */
+const sendSuccess = (res, { data, statusCode = 200 }) => {
+  return res.status(statusCode).json({
+    error: false,
+    data,
+  });
 };
 
-const sendError = (res, { message = "Something went wrong", statusCode = 500 } = {}) => {
+/**
+ * Kirim response error.
+ * @param {object} res - Express response object
+ * @param {object} options
+ * @param {string} options.message - Pesan error
+ * @param {number} [options.statusCode=500] - HTTP status code
+ */
+const sendError = (res, { message, statusCode = 500 }) => {
   return res.status(statusCode).json({
-    status: "error",
+    error: true,
     message,
   });
 };

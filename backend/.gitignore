@@ -4,9 +4,6 @@ node_modules/
 # Environment variables
 .env
 
-# Firebase credentials
-config/serviceAccountKey.json
-
 # Logs
 logs/
 *.log
