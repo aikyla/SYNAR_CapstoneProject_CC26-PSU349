@@ -1,66 +1,37 @@
-const express = require("express");
-const cors = require("cors");
-const helmet = require("helmet");
+/**
+ * Server Entry Point
+ *
+ * File ini bertanggung jawab untuk:
+ * 1. Memuat environment variables dari .env
+ * 2. Menginisialisasi Firebase Admin SDK
+ * 3. Menjalankan Express server
+ *
+ * Jalankan dengan: npm run dev (development) atau npm start (production)
+ */
+
+// Load environment variables SEBELUM import apapun yang butuh env vars
 require("dotenv").config();
 
-const { sendError } = require("./utils/responseHelper");
-const AppError = require("./utils/AppError");
+// Validasi environment variables yang wajib ada
+const requiredEnvVars = ["JWT_SECRET", "FIREBASE_SERVICE_ACCOUNT"];
 
-// --- Validate required environment variables ---
-const requiredEnv = ["JWT_SECRET", "FIREBASE_SERVICE_ACCOUNT"];
-for (const key of requiredEnv) {
+for (const key of requiredEnvVars) {
   if (!process.env[key]) {
-    console.error(`❌ Missing required environment variable: ${key}`);
+    console.error(`❌ Environment variable '${key}' tidak ditemukan.`);
+    console.error("   Pastikan file .env sudah dikonfigurasi dengan benar.");
     process.exit(1);
   }
 }
 
-const app = express();
-
-// --- Global Middleware ---
-app.use(helmet());
-app.use(cors());
-app.use(express.json());
-
-// --- Routes ---
-const authRoutes = require("./routes/authRoutes");
-const testRoutes = require("./routes/testRoutes");
-const weatherRoutes = require("./routes/weatherRoutes");
-const predictRoutes = require("./routes/predictRoutes");
-const historyRoutes = require("./routes/historyRoutes");
-
-app.use("/api/auth", authRoutes);
-app.use("/api/test", testRoutes);
-app.use("/weather", weatherRoutes);
-app.use("/predict", predictRoutes);
-app.use("/history", historyRoutes);
-
-// --- Health Check ---
-app.get("/api/health", (req, res) => {
-  res.json({ status: "success", data: { timestamp: new Date().toISOString() } });
-});
-
-// --- 404 Handler ---
-app.use((req, res) => {
-  sendError(res, { message: `Route ${req.method} ${req.originalUrl} not found`, statusCode: 404 });
-});
-
-// --- Global Error Handler ---
-app.use((err, req, res, next) => {
-  console.error(`[ERROR] ${err.message}`);
-
-  if (process.env.NODE_ENV !== "production") {
-    console.error(err.stack);
-  }
-
-  const statusCode = err.statusCode || 500;
-  const message = err.isOperational ? err.message : "Internal Server Error";
-
-  sendError(res, { message, statusCode });
-});
+// Import app setelah env vars tervalidasi
+// (firebase.js akan diinisialisasi saat di-require oleh models/controllers)
+const app = require("./app");
 
 // --- Start Server ---
 const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`✅ Server berjalan di port ${PORT}`);
+  console.log(`📍 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
 });

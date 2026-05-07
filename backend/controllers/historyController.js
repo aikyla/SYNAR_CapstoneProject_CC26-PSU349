@@ -1,18 +1,43 @@
 const asyncHandler = require("../utils/asyncHandler");
 const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/responseHelper");
-const historyCollection = require("../models/History");
+const { saveHistory, getHistoryByUser } = require("../models/historyModel");
 
 /**
- * POST /history
- * Saves a prediction result to the user's history.
- * Requires authentication.
+ * POST /api/history
+ *
+ * Menyimpan hasil prediksi ke history pengguna di Firestore.
+ * Membutuhkan autentikasi (JWT).
+ *
+ * Request body:
+ * {
+ *   "skin_type": 3,
+ *   "uv_index": 7.2,
+ *   "temperature": 31,
+ *   "humidity": 80,
+ *   "cloud_cover": 25,
+ *   "wind_speed": 12,
+ *   "recommended_duration": 25,
+ *   "risk_level": "moderate",
+ *   "recommendation": "Gunakan sunscreen SPF 30+"
+ * }
  */
 exports.createHistory = asyncHandler(async (req, res) => {
-  const { skin_type, uv_index, temperature, humidity, cloud_cover, wind_speed, recommended_duration, risk_level, recommendation } = req.body;
+  const {
+    skin_type,
+    uv_index,
+    temperature,
+    humidity,
+    cloud_cover,
+    wind_speed,
+    recommended_duration,
+    risk_level,
+    recommendation,
+  } = req.body;
 
+  // Validasi field wajib
   if (!skin_type || uv_index === undefined) {
-    throw new AppError("'skin_type' and 'uv_index' are required", 400);
+    throw new AppError("'skin_type' dan 'uv_index' wajib diisi", 400);
   }
 
   const historyData = {
@@ -26,40 +51,32 @@ exports.createHistory = asyncHandler(async (req, res) => {
     recommended_duration: recommended_duration || null,
     risk_level: risk_level || null,
     recommendation: recommendation || null,
-    createdAt: new Date(),
   };
 
-  const docRef = await historyCollection.add(historyData);
+  const result = await saveHistory(historyData);
 
   sendSuccess(res, {
-    data: { historyId: docRef.id, ...historyData },
+    data: result,
     statusCode: 201,
   });
 });
 
 /**
- * GET /history/:userId
- * Retrieves prediction history for a specific user.
- * Requires authentication.
+ * GET /api/history/:userId
+ *
+ * Mengambil riwayat prediksi berdasarkan userId dari Firestore.
+ * Membutuhkan autentikasi (JWT).
+ * User hanya bisa mengakses history miliknya sendiri.
  */
 exports.getHistoryByUser = asyncHandler(async (req, res) => {
   const { userId } = req.params;
 
-  // Users can only access their own history
+  // User hanya bisa akses history miliknya sendiri
   if (req.user.userId !== userId) {
-    throw new AppError("You can only access your own history", 403);
+    throw new AppError("Anda hanya bisa mengakses history milik sendiri", 403);
   }
 
-  const snapshot = await historyCollection
-    .where("userId", "==", userId)
-    .get();
-
-  const history = snapshot.docs
-    .map((doc) => ({
-      historyId: doc.id,
-      ...doc.data(),
-    }))
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const history = await getHistoryByUser(userId);
 
   sendSuccess(res, { data: history });
 });
