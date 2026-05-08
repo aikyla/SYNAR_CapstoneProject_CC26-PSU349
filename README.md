@@ -77,10 +77,7 @@ Paparan radiasi UV berlebihan merupakan salah satu penyebab utama kerusakan kuli
 
 ## Arsitektur Sistem
 
-```
 <img width="1536" height="1024" alt="visual" src="https://github.com/user-attachments/assets/e1c8c086-d668-4383-8686-7c910bebdaa1" />
-
-```
 
 ---
 
