@@ -404,7 +404,7 @@ Aplikasi telah di-deploy ke production menggunakan **Railway**:
 
 | Nama | Universitas | Peran |
 |:-----|:------------|:------|
-| Siapa ini nama PM nya | *(Universitas)* | AI Engineer |
+| *Aikylla Zahra Permana* | *STIKOM Yos Sudarso Purwokerto* | AI Engineer |
 | *Syahrul Bassam Yusuf* | *Universitas Muhammadiyah Prof. Dr. Hamka* | AI Engineer |
 | *Ekananda Kinanthi Rahayu* | *Universitas Trunojoyo Madura* | Data Science |
 | *Satriyo Akbar Maulana* | *Universitas Mercu Buana* | Data Science |
