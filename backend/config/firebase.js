@@ -1,12 +1,6 @@
 const admin = require("firebase-admin");
 
-/**
- * Inisialisasi Firebase Admin SDK.
- * Kredensial diambil dari environment variable FIREBASE_SERVICE_ACCOUNT
- * yang berisi JSON service account key dalam satu baris.
- */
 const initializeFirebase = () => {
-  // Cegah inisialisasi ganda
   if (admin.apps.length > 0) {
     return admin.firestore();
   }
@@ -34,12 +28,11 @@ const initializeFirebase = () => {
     credential: admin.credential.cert(serviceAccount),
   });
 
-  console.log("🔥 Firebase Admin SDK berhasil diinisialisasi");
+  console.log("Firebase Admin SDK berhasil diinisialisasi");
 
   return admin.firestore();
 };
 
-// Export fungsi inisialisasi dan getter Firestore
 const db = initializeFirebase();
 
 module.exports = { db, admin };

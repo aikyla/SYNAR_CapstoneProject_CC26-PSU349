@@ -2,69 +2,58 @@ const asyncHandler = require("../utils/asyncHandler");
 const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/responseHelper");
 
-const AI_SERVICE_URL = process.env.AI_SERVICE_URL;
-
-/**
- * POST /api/predict
- *
- * Proxy request prediksi ke AI service (FastAPI).
- * Jika AI_SERVICE_URL belum dikonfigurasi, kembalikan response dummy.
- *
- * Request body:
- * {
- *   "image_base64": "...",
- *   "weather": {
- *     "uv_index": 7.2,
- *     "temperature": 31,
- *     "humidity": 80,
- *     "wind_speed": 12,
- *     "uva": 4.1,
- *     "uvb": 0.9
- *   }
- * }
- */
 exports.predict = asyncHandler(async (req, res) => {
   const { image_base64, weather } = req.body;
+  const aiServiceUrl = process.env.AI_SERVICE_URL;
 
-  // Validasi input dasar
+  if (!aiServiceUrl) {
+    throw new AppError("AI_SERVICE_URL belum dikonfigurasi di environment backend", 500);
+  }
+
   if (!image_base64) {
     throw new AppError("Field 'image_base64' wajib diisi", 400);
   }
 
-  // Jika AI service belum tersedia, kembalikan dummy response
-  if (!AI_SERVICE_URL) {
-    console.warn(
-      "⚠️  AI_SERVICE_URL belum dikonfigurasi. Mengembalikan response dummy."
-    );
-
-    return sendSuccess(res, {
-      data: {
-        skin_type: 3,
-        confidence: 0.85,
-        safe: true,
-        duration_minutes: 25,
-        source: "dummy",
-      },
-    });
+  if (!weather) {
+    throw new AppError("Field 'weather' wajib diisi", 400);
   }
 
-  // Forward request ke AI service
-  const response = await fetch(AI_SERVICE_URL, {
+  const mlPayload = {
+    image_base64,
+    temp: weather.temperature ?? weather.temp,
+    humidity: weather.humidity,
+    wind: weather.wind_speed ?? weather.wind,
+    cloud: weather.cloud_cover ?? weather.cloud,
+    uv_index: weather.uv_index,
+  };
+
+  const response = await fetch(aiServiceUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(req.body),
+    body: JSON.stringify(mlPayload),
   });
 
+  const aiResult = await response.json().catch(() => null);
+
   if (!response.ok) {
-    const errorData = await response.json().catch(() => null);
     const message =
-      errorData?.message || `AI service mengembalikan status ${response.status}`;
+      aiResult?.message || aiResult?.error || `AI service mengembalikan status ${response.status}`;
     throw new AppError(message, response.status);
   }
 
-  const aiResult = await response.json();
+  const result = aiResult.data || aiResult;
 
   sendSuccess(res, {
-    data: aiResult.data || aiResult,
+    data: {
+      skin_type: result.skin_type,
+      skin_class: result.skin_class,
+      confidence: result.confidence ?? result.skin_confidence,
+      uv_index: result.uv ?? result.uv_index ?? mlPayload.uv_index,
+      risk_level: result.risk ?? result.risk_level,
+      safe_time: result.safe_time,
+      duration_minutes: result.duration_minutes ?? result.safe_time,
+      source: "ml-service",
+      note: result.note,
+    },
   });
 });
