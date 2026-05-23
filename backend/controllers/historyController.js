@@ -1,27 +1,8 @@
 const asyncHandler = require("../utils/asyncHandler");
 const AppError = require("../utils/AppError");
 const { sendSuccess } = require("../utils/responseHelper");
-const { saveHistory, getHistoryByUser } = require("../models/historyModel");
+const { saveHistory, getHistoryByUser, deleteHistoryById } = require("../models/historyModel");
 
-/**
- * POST /api/history
- *
- * Menyimpan hasil prediksi ke history pengguna di Firestore.
- * Membutuhkan autentikasi (JWT).
- *
- * Request body:
- * {
- *   "skin_type": 3,
- *   "uv_index": 7.2,
- *   "temperature": 31,
- *   "humidity": 80,
- *   "cloud_cover": 25,
- *   "wind_speed": 12,
- *   "recommended_duration": 25,
- *   "risk_level": "moderate",
- *   "recommendation": "Gunakan sunscreen SPF 30+"
- * }
- */
 exports.createHistory = asyncHandler(async (req, res) => {
   const {
     skin_type,
@@ -33,9 +14,11 @@ exports.createHistory = asyncHandler(async (req, res) => {
     recommended_duration,
     risk_level,
     recommendation,
+    location,
+    latitude,
+    longitude,
   } = req.body;
 
-  // Validasi field wajib
   if (!skin_type || uv_index === undefined) {
     throw new AppError("'skin_type' dan 'uv_index' wajib diisi", 400);
   }
@@ -51,6 +34,9 @@ exports.createHistory = asyncHandler(async (req, res) => {
     recommended_duration: recommended_duration || null,
     risk_level: risk_level || null,
     recommendation: recommendation || null,
+    location: location || null,
+    latitude: latitude ?? null,
+    longitude: longitude ?? null,
   };
 
   const result = await saveHistory(historyData);
@@ -61,17 +47,9 @@ exports.createHistory = asyncHandler(async (req, res) => {
   });
 });
 
-/**
- * GET /api/history/:userId
- *
- * Mengambil riwayat prediksi berdasarkan userId dari Firestore.
- * Membutuhkan autentikasi (JWT).
- * User hanya bisa mengakses history miliknya sendiri.
- */
 exports.getHistoryByUser = asyncHandler(async (req, res) => {
   const { userId } = req.params;
 
-  // User hanya bisa akses history miliknya sendiri
   if (req.user.userId !== userId) {
     throw new AppError("Anda hanya bisa mengakses history milik sendiri", 403);
   }
@@ -79,4 +57,20 @@ exports.getHistoryByUser = asyncHandler(async (req, res) => {
   const history = await getHistoryByUser(userId);
 
   sendSuccess(res, { data: history });
+});
+
+exports.deleteHistory = asyncHandler(async (req, res) => {
+  const { historyId } = req.params;
+
+  const result = await deleteHistoryById(historyId, req.user.userId);
+
+  if (result.reason === "not-found") {
+    throw new AppError("History tidak ditemukan", 404);
+  }
+
+  if (result.reason === "forbidden") {
+    throw new AppError("Anda hanya bisa menghapus history milik sendiri", 403);
+  }
+
+  sendSuccess(res, { data: result });
 });

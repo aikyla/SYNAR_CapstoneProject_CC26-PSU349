@@ -36,13 +36,66 @@ const getHistoryByUser = async (userId) => {
   const snapshot = await db
     .collection(COLLECTION_NAME)
     .where("userId", "==", userId)
-    .orderBy("createdAt", "desc")
     .get();
 
-  return snapshot.docs.map((doc) => ({
-    historyId: doc.id,
-    ...doc.data(),
-  }));
+  return snapshot.docs
+    .map((doc) => {
+      const data = doc.data();
+      let createdAtStr = data.createdAt;
+      
+      // Jika createdAt adalah Firestore Timestamp, konversi ke ISO string
+      if (createdAtStr && typeof createdAtStr.toDate === "function") {
+        createdAtStr = createdAtStr.toDate().toISOString();
+      } else if (createdAtStr && typeof createdAtStr._seconds === "number") {
+        createdAtStr = new Date(createdAtStr._seconds * 1000).toISOString();
+      }
+      
+      return {
+        historyId: doc.id,
+        ...data,
+        createdAt: createdAtStr || new Date(0).toISOString(),
+      };
+    })
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 };
 
-module.exports = { saveHistory, getHistoryByUser };
+const deleteHistoryById = async (historyId, userId) => {
+  const docRef = db.collection(COLLECTION_NAME).doc(historyId);
+  const doc = await docRef.get();
+
+  if (!doc.exists) {
+    return { deleted: false, reason: "not-found" };
+  }
+
+  const data = doc.data();
+  if (data.userId !== userId) {
+    return { deleted: false, reason: "forbidden" };
+  }
+
+  await docRef.delete();
+  return { deleted: true, historyId };
+};
+
+const deleteHistoryByUserId = async (userId) => {
+  const snapshot = await db
+    .collection(COLLECTION_NAME)
+    .where("userId", "==", userId)
+    .get();
+
+  if (snapshot.empty) {
+    return { deletedCount: 0 };
+  }
+
+  const batch = db.batch();
+  snapshot.docs.forEach((doc) => batch.delete(doc.ref));
+  await batch.commit();
+
+  return { deletedCount: snapshot.size };
+};
+
+module.exports = {
+  saveHistory,
+  getHistoryByUser,
+  deleteHistoryById,
+  deleteHistoryByUserId,
+};

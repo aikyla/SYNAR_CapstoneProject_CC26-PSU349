@@ -1,12 +1,23 @@
 const express = require("express");
 const router = express.Router();
 
-const { register, login } = require("../controllers/authController");
+const {
+  register,
+  login,
+  getMe,
+  updateMe,
+  forgotPassword,
+  resetPassword,
+  deleteMe,
+} = require("../controllers/authController");
+const authMiddleware = require("../middlewares/authMiddleware");
 
-// POST /api/auth/register — Daftar user baru
 router.post("/register", register);
-
-// POST /api/auth/login — Login dan dapatkan JWT token
 router.post("/login", login);
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
+router.get("/me", authMiddleware, getMe);
+router.put("/me", authMiddleware, updateMe);
+router.delete("/me", authMiddleware, deleteMe);
 
 module.exports = router;

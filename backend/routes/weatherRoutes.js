@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
 
-const { getRealtime } = require("../controllers/weatherController");
+const { getRealtime, searchLocation, reverseLocation } = require("../controllers/weatherController");
 
-// GET /api/weather/realtime — Ambil data cuaca realtime
 router.get("/realtime", getRealtime);
+router.get("/geocode/search", searchLocation);
+router.get("/geocode/reverse", reverseLocation);
 
 module.exports = router;

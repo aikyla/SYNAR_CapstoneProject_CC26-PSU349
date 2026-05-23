@@ -1,181 +1,97 @@
 # SYNAR Backend API
 
-REST API backend for **SYNAR** (System for UV & Sun Exposure Analysis and Recommendation), built with **Express.js**, **Firebase Firestore**, and **JWT Authentication**.
+Express API for SYNAR, covering authentication, UV/weather data, prediction proxying, and user history.
 
 ## Tech Stack
 
-- **Runtime**: Node.js
-- **Framework**: Express.js v5
-- **Database**: Firebase Firestore
-- **Authentication**: JWT (jsonwebtoken) + bcryptjs
-- **Security**: Helmet, CORS
-- **Weather Data**: Open-Meteo API (free, no key required)
-
-## Project Structure
-
-```
-backend/
-├── config/
-│   └── firebase.js              # Firebase Admin SDK initialization
-├── controllers/
-│   ├── authController.js        # Register & login logic
-│   ├── weatherController.js     # Real-time weather data
-│   ├── predictController.js     # AI prediction proxy
-│   ├── historyController.js     # Prediction history CRUD
-│   └── testController.js        # Test/debug endpoints
-├── middlewares/
-│   └── authMiddleware.js        # JWT token verification
-├── models/
-│   ├── User.js                  # Firestore users collection
-│   └── History.js               # Firestore history collection
-├── routes/
-│   ├── authRoutes.js            # /api/auth routes
-│   ├── weatherRoutes.js         # /weather routes
-│   ├── predictRoutes.js         # /predict routes
-│   ├── historyRoutes.js         # /history routes
-│   └── testRoutes.js            # /api/test routes (dev only)
-├── utils/
-│   ├── AppError.js              # Custom error class with status codes
-│   ├── asyncHandler.js          # Async wrapper for controllers
-│   ├── responseHelper.js        # Standardized JSON response format
-│   └── validators.js            # Input validation utilities
-├── .env                         # Environment variables (not in git)
-├── .env.example                 # Template for environment variables
-├── .gitignore
-├── package.json
-├── README.md
-└── server.js                    # Application entry point
-```
+- Node.js
+- Express 5
+- Firebase Firestore
+- JWT authentication
+- Open-Meteo and OpenStreetMap integrations
 
 ## Getting Started
 
-### 1. Clone & Install
-
 ```bash
-git clone <repository-url>
-cd backend
 npm install
-```
-
-### 2. Environment Variables
-
-Copy the example env file and fill in your values:
-
-```bash
-cp .env.example .env
-```
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `PORT` | Server port (default: 3000) | No |
-| `JWT_SECRET` | Secret key for JWT signing (min 32 chars) | **Yes** |
-| `FIREBASE_SERVICE_ACCOUNT` | Full JSON of Firebase service account key (single line) | **Yes** |
-| `AI_SERVICE_URL` | FastAPI URL from AI team for prediction proxy | No |
-
-### 3. Run
-
-```bash
-# Development (with hot reload)
 npm run dev
+```
 
-# Production
+For production:
+
+```bash
 npm start
 ```
 
-## API Endpoints
+## Environment Variables
 
-### Health Check
+Create a local `.env` file for development. On Render/Railway, add the same keys in the service environment settings.
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/api/health` | ❌ | Check if API is running |
+| Variable | Required | Description |
+| --- | --- | --- |
+| `PORT` | No | API port. Defaults to `3000`. |
+| `JWT_SECRET` | Yes | Secret used to sign JWTs. |
+| `JWT_EXPIRES_IN` | No | Token lifetime. Defaults to `30d`. |
+| `FIREBASE_SERVICE_ACCOUNT` | Yes | Firebase service account JSON as a single-line string. |
+| `AI_SERVICE_URL` | Yes | ML service prediction endpoint, for example `http://127.0.0.1:5000/predict` locally. |
+| `FRONTEND_URL` | No | Frontend URL used in reset-password links. Defaults to `http://localhost:5173`. |
+| `SMTP_HOST` | No | SMTP host for password reset emails. |
+| `SMTP_PORT` | No | SMTP port for password reset emails. |
+| `SMTP_SECURE` | No | Use TLS for SMTP. Set to `true` or `false`. |
+| `SMTP_USER` | No | SMTP username. |
+| `SMTP_PASS` | No | SMTP password. |
+| `SMTP_FROM` | No | Sender email. Defaults to `SMTP_USER`. |
 
-### Authentication
+React does not send reset emails directly. The frontend calls `/api/auth/forgot-password`, then the backend sends the email using SMTP so email credentials stay private.
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/api/auth/register` | ❌ | Register a new user |
-| POST | `/api/auth/login` | ❌ | Login and receive JWT token |
+For deployment:
 
-### Weather
+- Set `FRONTEND_URL` to the deployed frontend URL, for example `https://synar.vercel.app`.
+- Set `AI_SERVICE_URL` to the deployed ML API prediction endpoint.
+- Set `SMTP_*` values from an email provider if password reset must send real emails.
+- Set `VITE_API_URL` in the frontend deployment to the deployed backend API URL, for example `https://synar-api.onrender.com/api`.
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/weather/realtime?lat=&lon=` | ❌ | Get real-time weather + UV data |
-
-### Prediction (AI Proxy)
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/predict` | ❌ | Proxy prediction request to AI service |
-
-### History
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/history` | ✅ | Save prediction result to history |
-| GET | `/history/:userId` | ✅ | Get prediction history for a user |
-
-### Test (Development Only)
+## Endpoints
 
 | Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/api/test` | ❌ | Simple server test |
-| GET | `/api/test/db` | ❌ | Test Firestore connectivity |
-| GET | `/api/test/protected` | ✅ | Test JWT-protected route |
+| --- | --- | --- | --- |
+| `GET` | `/api/health` | No | Health check. |
+| `POST` | `/api/auth/register` | No | Register a user. |
+| `POST` | `/api/auth/login` | No | Login and receive a JWT. |
+| `POST` | `/api/auth/forgot-password` | No | Request a password reset email. |
+| `POST` | `/api/auth/reset-password` | No | Reset password using a reset token. |
+| `GET` | `/api/auth/me` | Yes | Get the current user profile. |
+| `PUT` | `/api/auth/me` | Yes | Update the current user profile. |
+| `DELETE` | `/api/auth/me` | Yes | Delete the current user and owned history records. |
+| `GET` | `/api/weather/realtime?lat=&lon=` | No | Get realtime weather and UV data. |
+| `GET` | `/api/weather/geocode/search?q=` | No | Search locations. |
+| `GET` | `/api/weather/geocode/reverse?lat=&lon=` | No | Resolve coordinates into a display location. |
+| `POST` | `/api/predict` | No | Proxy prediction request to the ML service. |
+| `POST` | `/api/history` | Yes | Save a UV check result. |
+| `GET` | `/api/history/:userId` | Yes | Get the authenticated user's history. |
+| `DELETE` | `/api/history/:historyId` | Yes | Delete a history record. |
 
 ## Response Format
 
-All responses follow the SYNAR API contract:
-
-### Success
+Successful responses:
 
 ```json
 {
-  "status": "success",
-  "data": { ... }
+  "error": false,
+  "data": {}
 }
 ```
 
-### Error
+Error responses:
 
 ```json
 {
-  "status": "error",
+  "error": true,
   "message": "Error description"
 }
 ```
 
-## Authentication
+## API Contract and Schema
 
-Include the JWT token in the `Authorization` header:
-
-```
-Authorization: Bearer <your_token>
-```
-
-Tokens expire after **1 hour**.
-
-## Database Schema (Firestore)
-
-### `users` Collection
-| Field | Type | Description |
-|-------|------|-------------|
-| email | string | User email (unique, lowercase) |
-| password | string | Bcrypt hashed password |
-| createdAt | timestamp | Registration date |
-
-### `history` Collection
-| Field | Type | Description |
-|-------|------|-------------|
-| userId | string | Reference to user document ID |
-| skin_type | number | Fitzpatrick skin type (1-6) |
-| uv_index | number | UV index at time of prediction |
-| temperature | number | Temperature (°C) |
-| humidity | number | Humidity (%) |
-| cloud_cover | number | Cloud coverage (%) |
-| wind_speed | number | Wind speed (m/s) |
-| recommended_duration | string | Recommended sun exposure duration |
-| risk_level | string | UV risk level |
-| recommendation | string | Safety recommendation text |
-| createdAt | timestamp | Prediction date |
+- API contract: `../docs/api_contract.md`
+- Firestore schema: `../docs/database_schema.md`
