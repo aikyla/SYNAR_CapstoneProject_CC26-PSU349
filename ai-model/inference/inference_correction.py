@@ -4,7 +4,7 @@ import joblib
 import sklearn
 import xgboost
 
-pipeline = joblib.load("correction_pipeline.pkl")
+pipeline = joblib.load("/content/drive/MyDrive/Capstone_CC26-PSU349/model/correction_pipeline.pkl")
 
 MED_LOWER = {1: 200, 2: 250, 3: 300, 4: 450, 5: 600, 6: 1000}
 
