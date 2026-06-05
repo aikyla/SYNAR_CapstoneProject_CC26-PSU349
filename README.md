@@ -475,17 +475,7 @@ Menyusul
 
 1.  **Clone repositori ini:**
     ```bash
-    git clone https://github.com/<username>/synar.git
-    cd synar
-    ```
-
-## Panduan Instalasi & Setup
-
-**Langkah-langkah:**
-
-1.  **Clone repositori ini:**
-    ```bash
-    git clone https://github.com/<username>/synar.git
+    git clone https://github.com/aikyla/SYNAR_CapstoneProject_CC26-PSU349.git 
     cd synar
     ```
 
