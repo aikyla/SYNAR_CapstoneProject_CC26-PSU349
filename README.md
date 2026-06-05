@@ -461,13 +461,92 @@ Berikut adalah alur detail komunikasi dan kueri database (BE ➔ DB) dari 8 inte
 
 ---
 
-## Struktur Proyek
+## Struktur project
 
-```
-Menyusul
+```text
+SYNAR_CapstoneProject_CC26-PSU349-dev/
+├── ai-model/                         # Repositori Layanan Model AI (FastAPI)
+│   ├── app.py/                       # Direktori Kode Utama Server Python
+│   │   ├── app.py                    # Server FastAPI untuk AI CNN Klasifikasi Tipe Kulit (Port 8000)
+│   │   ├── app_regression.py         # Server FastAPI untuk AI Regresi Koreksi Cuaca & Best Time (Port 8001)
+│   │   ├── custom_layer.py           # Kustomisasi layer Keras/TensorFlow untuk model CNN
+│   │   ├── custom_loss.py            # Kustomisasi loss function untuk model CNN
+│   │   ├── inference_cnn.py          # Logika pemrosesan gambar dan inferensi tipe kulit
+│   │   ├── correction_pipeline.pkl   # Pipeline model regresi XGBoost untuk koreksi waktu aman
+│   │   └── best_time_pipeline.pkl    # Pipeline model regresi XGBoost untuk penentuan best hours
+│   ├── model_cnn_skintype_saved/     # File biner model CNN (SavedModel TensorFlow)
+│   ├── notebooks/                    # Jupyter Notebooks untuk eksperimen & pelatihan model
+│   └── requirements.txt              # Dependensi pustaka Python (TensorFlow, FastAPI, Uvicorn, dll.)
+│
+├── backend/                          # Server API Gateway & Orkestrator (Node.js + Express)
+│   ├── config/
+│   │   └── firebase.js               # Konfigurasi koneksi ke Firebase Admin SDK (Firestore)
+│   ├── controllers/                  # Logika pengendali request & penengah AI
+│   │   ├── authController.js         # Logika register, login, dan autentikasi user
+│   │   ├── historyController.js      # Logika operasi CRUD riwayat pengecekan user
+│   │   ├── predictController.js      # Orkestrator yang menembak Server CNN (8000) & Regresi (8001)
+│   │   └── weatherController.js      # Penghubung data cuaca Open-Meteo & Nominatim Geocoding
+│   ├── middlewares/                  # Kumpulan filter request Express
+│   │   ├── authMiddleware.js         # Validasi token JWT keamanan pengguna
+│   │   └── errorHandler.js           # Penanganan error tersentralisasi
+│   ├── models/                       # Kueri database Firestore
+│   │   ├── historyModel.js           # Operasi baca, simpan, dan hapus riwayat di Firestore
+│   │   └── userModel.js              # Operasi baca, tulis, dan ubah profil pengguna di Firestore
+│   ├── routes/                       # Pemetaan endpoint router Express
+│   │   ├── authRoutes.js             # Rute untuk register, login, profil, dan reset password
+│   │   ├── historyRoutes.js          # Rute untuk CRUD riwayat
+│   │   ├── predictRoutes.js          # Rute untuk orkestrasi deteksi gambar & manual correction
+│   │   └── weatherRoutes.js          # Rute untuk pencarian lokasi dan cuaca real-time
+│   ├── utils/                        # Pustaka utilitas pembantu
+│   │   ├── AppError.js               # Kustomisasi class penanganan error Express
+│   │   ├── asyncHandler.js           # Pembungkus fungsi controller untuk menangani error async
+│   │   ├── mailer.js                 # Layanan pengiriman email (lupa sandi) via Nodemailer
+│   │   ├── responseHelper.js         # Pembungkus format seragam respons JSON
+│   │   └── validators.js             # Validasi input request Express
+│   ├── app.js                        # Inisialisasi Express & pendaftaran middleware/router
+│   ├── server.js                     # Berkas utama untuk menjalankan server Express (Port 3000)
+│   ├── .env.example                  # Template konfigurasi variabel lingkungan backend
+│   └── package.json                  # Dependensi library Node.js (Express, Cors, Firebase-Admin, JWT)
+│
+├── frontend/                         # Antarmuka Pengguna SPA (React.js + Vite)
+│   ├── public/                       # Aset publik statis (seperti favicon & manifest)
+│   ├── src/                          # Sumber kode utama React
+│   │   ├── app/                      # Arsitektur logika komponen & halaman
+│   │   │   ├── core/
+│   │   │   │   └── api.js            # Wrapper fungsi fetch apiRequest terpadu
+│   │   │   ├── pages/                # Halaman-halaman utama dasbor
+│   │   │   │   ├── Auth.jsx          # Formulir Login, Daftar, Lupa Sandi, & Reset Sandi
+│   │   │   │   ├── Dashboard.jsx     # Dasbor pengecekan UV, kamera scanner wajah, & Best Outdoor Hours
+│   │   │   │   ├── History.jsx       # Halaman riwayat pengecekan user lengkap dengan Safe Time badge
+│   │   │   │   ├── Landing.jsx       # Landing page promosi awal aplikasi
+│   │   │   │   ├── Map.jsx           # Dasbor peta sebaran UV menggunakan Leaflet Map
+│   │   │   │   └── Profile.jsx       # Pengaturan profil pengguna dan warna tipe kulit bawaan
+│   │   │   ├── services/             # Integrasi endpoint layanan backend
+│   │   │   │   ├── authService.js    # Service API Auth (login, register, reset password)
+│   │   │   │   └── synarService.js   # Service API pendukung (cuaca, prediksi AI, history CRUD)
+│   │   │   ├── App.jsx               # Komponen entry point React App
+│   │   │   ├── components.jsx        # Komponen layout global (AppHeader, PublicLayout, RequireAuth)
+│   │   │   ├── routes.jsx            # Konfigurasi sistem routing antarmuka (React Router)
+│   │   │   └── utils.js              # Kumpulan fungsi pembantu (data warna Fitzpatrick, level UV, dll.)
+│   │   ├── assets/                   # Aset media terpusat
+│   │   │   ├── fonts/                # File berkas font Comic Relief (Regular & Bold)
+│   │   │   └── icon.png              # Logo identitas utama aplikasi SYNAR
+│   │   ├── styles/                   # Kumpulan berkas CSS global
+│   │   │   ├── fonts.css             # Deklarasi font-face lokal
+│   │   │   ├── theme.css             # Konfigurasi skema tema visual premium
+│   │   │   ├── tailwind.css          # Konfigurasi Tailwind CSS
+│   │   │   └── index.css             # Entry point style css utama
+│   │   └── main.jsx                  # Berkas inisialisasi render React ke DOM
+│   ├── .env.example                  # Template konfigurasi variabel lingkungan frontend
+│   ├── index.html                    # Kerangka HTML utama aplikasi
+│   ├── vite.config.js                # Konfigurasi server bundler Vite
+│   └── package.json                  # Dependensi pustaka frontend (React, React-Router, Motion, Lucide)
+│
+├── data-science/                     # Berkas pendukung pengolahan data AI
+├── docs/                             # Dokumen pendukung tambahan
+├── README.md                         # Panduan utama repositori aplikasi
 ```
 
----
 
 ## Panduan Instalasi & Setup
 
