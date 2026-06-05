@@ -557,20 +557,6 @@ Buka **empat terminal terpisah** untuk menjalankan seluruh layanan secara lokal 
 
 ---
 
-## Deployment
-
-Aplikasi dapat di-deploy ke production menggunakan **Railway** dan **Netlify**:
-
-| Service | Platform | URL |
-|---|---|---|
-| Backend API (Node.js) | Railway | *(sesuaikan)* |
-| AI CNN Service (Port 8000) | Railway | *(sesuaikan)* |
-| AI Regression Service (Port 8001) | Railway | *(sesuaikan)* |
-| Frontend (React) | Netlify | *(sesuaikan)* |
-| Streamlit Prototype | Streamlit Cloud | [https://synarcapstoneproject.streamlit.app/](https://synarcapstoneproject.streamlit.app/) |
-
-> *Catatan: Pada free tier Railway, service mungkin mengalami cold start (delay 10–30 detik pada request pertama setelah idle).*
-
 ### Streamlit Prototype
 Anda juga dapat mengakses prototipe dasbor model prediksi berbasis Streamlit melalui tautan berikut:
 👉 **[SYNAR Streamlit App](https://synarcapstoneproject.streamlit.app/)**
