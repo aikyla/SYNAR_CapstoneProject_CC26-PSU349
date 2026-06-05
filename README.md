@@ -1,7 +1,7 @@
 # SYNAR_CapstoneProject_CC26-PSU349
 <div align="center">
 
-# ☀️ SYNAR — Sun Your Awareness
+# SYNAR
 
 ### Sistem Prediksi Risiko Radiasi Sinar UV Berbasis Machine Learning
 **Capstone Project — Coding Camp DBS Foundation 2026**
